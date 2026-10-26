@@ -225,6 +225,28 @@ export type Readiness = z.infer<typeof Readiness>
 
 /* -------------------------------------------------------------------- plan */
 
+/**
+ * The model's contribution, kept in one clearly labelled place so it is always
+ * obvious which parts of a plan are prose and which are computed.
+ */
+export const PlanNarrative = z.object({
+  summary: z.string().max(700),
+  categoryNotes: z.array(z.object({ category: BudgetCategory, note: z.string().max(240) })),
+  watchOut: z.string().max(300),
+  /** Whether a model wrote this or the deterministic fallback did. */
+  source: z.enum(['model', 'fallback']),
+  considerations: z
+    .array(
+      z.object({
+        label: z.string().max(80),
+        detail: z.string().max(240),
+        affects: BudgetCategory.nullable(),
+      }),
+    )
+    .default([]),
+})
+export type PlanNarrative = z.infer<typeof PlanNarrative>
+
 /** The full aggregate the UI renders. Assembled by the reducer, never by the LLM. */
 export const Plan = z.object({
   event: EventRecord,
@@ -233,6 +255,7 @@ export const Plan = z.object({
   tasks: z.array(Task),
   risks: z.array(Risk),
   schedule: z.array(ScheduleEntry),
+  narrative: PlanNarrative.nullable().default(null),
   /** True when any live source failed and sample data was substituted. */
   usingSampleData: z.boolean().default(false),
 })

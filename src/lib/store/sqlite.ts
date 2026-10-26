@@ -3,6 +3,7 @@ import { dirname } from 'node:path'
 import {
   BudgetItem,
   EventRecord,
+  PlanNarrative,
   Risk,
   ScenarioResult,
   ScheduleEntry,
@@ -40,37 +41,43 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS events (
   id         TEXT PRIMARY KEY,
   updated_at TEXT NOT NULL,
-  json       TEXT NOT NULL
+  json       TEXT NOT NULL,
+  narrative  TEXT
 );
 
 CREATE TABLE IF NOT EXISTS budget_items (
-  id       TEXT PRIMARY KEY,
+  id       TEXT NOT NULL,
   event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  json     TEXT NOT NULL
+  json     TEXT NOT NULL,
+  PRIMARY KEY (id, event_id)
 );
 
 CREATE TABLE IF NOT EXISTS vendors (
-  id       TEXT PRIMARY KEY,
+  id       TEXT NOT NULL,
   event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  json     TEXT NOT NULL
+  json     TEXT NOT NULL,
+  PRIMARY KEY (id, event_id)
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
-  id       TEXT PRIMARY KEY,
+  id       TEXT NOT NULL,
   event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  json     TEXT NOT NULL
+  json     TEXT NOT NULL,
+  PRIMARY KEY (id, event_id)
 );
 
 CREATE TABLE IF NOT EXISTS risks (
-  id       TEXT PRIMARY KEY,
+  id       TEXT NOT NULL,
   event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  json     TEXT NOT NULL
+  json     TEXT NOT NULL,
+  PRIMARY KEY (id, event_id)
 );
 
 CREATE TABLE IF NOT EXISTS schedule_entries (
-  id       TEXT PRIMARY KEY,
+  id       TEXT NOT NULL,
   event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  json     TEXT NOT NULL
+  json     TEXT NOT NULL,
+  PRIMARY KEY (id, event_id)
 );
 
 CREATE TABLE IF NOT EXISTS scenarios (
@@ -107,6 +114,20 @@ export class SqliteStore implements Store {
     this.db = db
     this.location = location
     this.db.exec(SCHEMA)
+    this.migrate()
+  }
+
+  /**
+   * Forward migrations for databases created by an earlier build. SQLite has
+   * no "ADD COLUMN IF NOT EXISTS", so the duplicate-column error is the signal
+   * that the column is already there.
+   */
+  private migrate(): void {
+    try {
+      this.db.exec('ALTER TABLE events ADD COLUMN narrative TEXT')
+    } catch {
+      // Column already present.
+    }
   }
 
   /**
@@ -189,8 +210,15 @@ export class SqliteStore implements Store {
   async getPlan(eventId: string): Promise<Plan | null> {
     const event = await this.getEvent(eventId)
     if (!event) return null
+
+    const row = this.db.prepare('SELECT narrative FROM events WHERE id = ?').get(eventId)
+    const narrative = row?.narrative
+      ? PlanNarrative.parse(JSON.parse(String(row.narrative)))
+      : null
+
     return {
       event,
+      narrative,
       budget: this.readAll(COLLECTIONS.budget, eventId, (v) => BudgetItem.parse(v)),
       vendors: this.readAll(COLLECTIONS.vendors, eventId, (v) => Vendor.parse(v)),
       tasks: this.readAll(COLLECTIONS.tasks, eventId, (v) => Task.parse(v)),
@@ -208,6 +236,9 @@ export class SqliteStore implements Store {
     await this.putTasks(id, plan.tasks)
     await this.putRisks(id, plan.risks)
     await this.putSchedule(id, plan.schedule)
+    this.db
+      .prepare('UPDATE events SET narrative = ? WHERE id = ?')
+      .run(plan.narrative ? JSON.stringify(plan.narrative) : null, id)
   }
 
   async putScenario(scenario: ScenarioResult): Promise<void> {

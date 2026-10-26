@@ -1,5 +1,5 @@
-import { Milestone } from '@/components/milestone'
+import { BriefForm } from '@/components/brief-form'
 
-export default function Page() {
-  return <Milestone title="Event Brief" milestone="M2">Conversational intake writes the structured event record.</Milestone>
+export default function BriefPage() {
+  return <BriefForm />
 }

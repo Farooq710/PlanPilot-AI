@@ -1,3 +1,4 @@
+import { budgetItemId } from '@/lib/engines/budget'
 import {
   BudgetItem,
   EventRecord,
@@ -5,6 +6,7 @@ import {
   Risk,
   Task,
   Vendor,
+  type BudgetCategory,
   type Evidence,
 } from '@/lib/schemas'
 
@@ -105,7 +107,13 @@ export const demoBudget: BudgetItem[] = [
     perHead: null,
     evidence: { status: 'estimate', note: 'Reserved against weather and overruns' },
   },
-].map((b) => BudgetItem.parse({ ...b, eventId: DEMO_EVENT_ID }))
+].map((b) =>
+  BudgetItem.parse({
+    ...b,
+    id: budgetItemId(DEMO_EVENT_ID, b.category as BudgetCategory),
+    eventId: DEMO_EVENT_ID,
+  }),
+)
 
 export const demoVendors: Vendor[] = [
   {

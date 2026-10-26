@@ -1,4 +1,5 @@
 import { Shell } from '@/components/chrome'
+import { getActiveEventId } from '@/lib/active-event'
 import { DEMO_EVENT_ID, assertDemoPlan, demoPlan } from '@/lib/demo'
 import { inr } from '@/lib/money'
 import { getStore } from '@/lib/store'
@@ -11,12 +12,14 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   assertDemoPlan()
 
   const store = await getStore()
-  // M1 seeds the demo event so the shell has something real to show. From M2
-  // the brief writes the event and this becomes a lookup by id.
-  let plan = await store.getPlan(DEMO_EVENT_ID)
+  const activeId = await getActiveEventId()
+
+  let plan = await store.getPlan(activeId)
   if (!plan) {
-    await store.putPlan(demoPlan)
-    plan = demoPlan
+    // Nothing built yet, so the shell shows the seeded demo until the brief
+    // writes a real event and points the cookie at it.
+    plan = (await store.getPlan(DEMO_EVENT_ID)) ?? demoPlan
+    if (!(await store.getEvent(DEMO_EVENT_ID))) await store.putPlan(demoPlan)
   }
 
   const spent = plan.budget.reduce((sum, item) => sum + (item.actualINR ?? 0), 0)

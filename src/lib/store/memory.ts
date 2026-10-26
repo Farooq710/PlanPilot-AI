@@ -3,6 +3,7 @@ import type {
   EventRecord,
   Plan,
   Risk,
+  PlanNarrative,
   ScenarioResult,
   ScheduleEntry,
   Task,
@@ -18,6 +19,7 @@ type Tables = {
   risks: Map<string, Risk[]>
   schedule: Map<string, ScheduleEntry[]>
   scenarios: Map<string, ScenarioResult[]>
+  narratives: Map<string, PlanNarrative | null>
 }
 
 const empty = (): Tables => ({
@@ -28,6 +30,7 @@ const empty = (): Tables => ({
   risks: new Map(),
   schedule: new Map(),
   scenarios: new Map(),
+  narratives: new Map(),
 })
 
 /**
@@ -71,6 +74,7 @@ export class MemoryStore implements Store {
     db.risks.delete(id)
     db.schedule.delete(id)
     db.scenarios.delete(id)
+    db.narratives.delete(id)
   }
 
   async putBudget(eventId: string, items: BudgetItem[]): Promise<void> {
@@ -103,6 +107,7 @@ export class MemoryStore implements Store {
       tasks: db.tasks.get(eventId) ?? [],
       risks: db.risks.get(eventId) ?? [],
       schedule: db.schedule.get(eventId) ?? [],
+      narrative: db.narratives.get(eventId) ?? null,
       usingSampleData: false,
     })
   }
@@ -115,6 +120,7 @@ export class MemoryStore implements Store {
     await this.putTasks(id, plan.tasks)
     await this.putRisks(id, plan.risks)
     await this.putSchedule(id, plan.schedule)
+    db.narratives.set(id, plan.narrative ? clone(plan.narrative) : null)
   }
 
   async putScenario(scenario: ScenarioResult): Promise<void> {
