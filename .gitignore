@@ -37,3 +37,6 @@ Thumbs.db
 
 # local database
 .data/
+
+# typescript build cache
+*.tsbuildinfo
