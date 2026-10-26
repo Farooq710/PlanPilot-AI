@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { getActiveEventId, setActiveEventId } from '@/lib/active-event'
 import { buildPlanFromDraft } from '@/lib/engines/plan'
 import { runResearch } from '@/lib/engines/research'
-import { EventDraft } from '@/lib/schemas'
+import { EventDraft, type TaskStatus } from '@/lib/schemas'
 import { getStore } from '@/lib/store'
 
 export type CreatePlanState =
@@ -101,5 +101,61 @@ export async function toggleShortlist(vendorId: string): Promise<void> {
     plan.vendors.map((v) => (v.id === vendorId ? { ...v, shortlisted: !v.shortlisted } : v)),
   )
   revalidatePath('/research')
+  revalidatePath('/command')
+}
+
+/** Moves a task between board columns. */
+export async function setTaskStatus(taskId: string, status: TaskStatus): Promise<void> {
+  const store = await getStore()
+  const eventId = await getActiveEventId()
+  const plan = await store.getPlan(eventId)
+  if (!plan) return
+
+  await store.putTasks(
+    eventId,
+    plan.tasks.map((t) => (t.id === taskId ? { ...t, status } : t)),
+  )
+  revalidatePath('/command')
+}
+
+/**
+ * Confirms or unconfirms a booking. Confirming is what moves the readiness
+ * score most, so it is a deliberate action rather than a side effect of
+ * shortlisting.
+ */
+export async function toggleConfirmed(vendorId: string): Promise<void> {
+  const store = await getStore()
+  const eventId = await getActiveEventId()
+  const plan = await store.getPlan(eventId)
+  if (!plan) return
+
+  await store.putVendors(
+    eventId,
+    plan.vendors.map((v) =>
+      v.id === vendorId
+        ? // Confirming implies shortlisting; it cannot be confirmed but unlisted.
+          { ...v, confirmed: !v.confirmed, shortlisted: !v.confirmed ? true : v.shortlisted }
+        : v,
+    ),
+  )
+  revalidatePath('/command')
+  revalidatePath('/research')
+}
+
+/** Marks a risk as mitigated, or reopens it. */
+export async function toggleRiskMitigated(riskId: string): Promise<void> {
+  const store = await getStore()
+  const eventId = await getActiveEventId()
+  const plan = await store.getPlan(eventId)
+  if (!plan) return
+
+  await store.putRisks(
+    eventId,
+    plan.risks.map((r) =>
+      r.id === riskId
+        ? { ...r, status: r.status === 'mitigated' ? 'open' : 'mitigated' }
+        : r,
+    ),
+  )
   revalidatePath('/command')
 }

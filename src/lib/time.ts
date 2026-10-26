@@ -26,16 +26,19 @@ export const stamp = (iso: string): string =>
     new Date(iso),
   )
 
+/** Today's date in IST as YYYY-MM-DD. */
+export function todayYmd(now = new Date()): string {
+  return dt({ year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(now)
+    .split('/')
+    .reverse()
+    .join('-')
+}
+
 /** Whole days from today to an event date, negative once it has passed. */
 export function daysUntil(dateYmd: string, today = new Date()): number {
   const target = Date.parse(`${dateYmd}T00:00:00+05:30`)
-  const start = Date.parse(
-    `${dt({ year: 'numeric', month: '2-digit', day: '2-digit' })
-      .format(today)
-      .split('/')
-      .reverse()
-      .join('-')}T00:00:00+05:30`,
-  )
+  const start = Date.parse(`${todayYmd(today)}T00:00:00+05:30`)
   return Math.round((target - start) / 86_400_000)
 }
 

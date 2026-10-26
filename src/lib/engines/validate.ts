@@ -1,5 +1,6 @@
 import type { Plan } from '@/lib/schemas'
 import { inr } from '@/lib/money'
+import { todayYmd } from '@/lib/time'
 import { budgetTotals } from './budget'
 import { scheduleIssues } from './schedule'
 
@@ -131,12 +132,13 @@ export function validatePlan(plan: Plan): ValidationResult {
     }
   }
 
-  const overdue = tasks.filter((t) => t.status !== 'done' && t.dueDate < event.date).length
+  // Overdue means past today. Every prep task is due before the event.
+  const overdue = tasks.filter((t) => t.status !== 'done' && t.dueDate < todayYmd()).length
   if (overdue > 0) {
     issues.push({
       severity: 'info',
       area: 'tasks',
-      message: `${overdue} ${overdue === 1 ? 'task is' : 'tasks are'} due before the event and not done`,
+      message: `${overdue} ${overdue === 1 ? 'task is' : 'tasks are'} overdue`,
       fix: 'Work the task board',
     })
   }

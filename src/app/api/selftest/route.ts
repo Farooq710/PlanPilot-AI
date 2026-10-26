@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { buildPlanFromDraft } from '@/lib/engines/plan'
 import { budgetTotals } from '@/lib/engines/budget'
+import { scoreReadiness } from '@/lib/engines/readiness'
 import { validatePlan } from '@/lib/engines/validate'
 import { getLlm } from '@/lib/llm'
 import { PlanExplanation, parseWithRetry } from '@/lib/llm/provider'
@@ -110,6 +111,48 @@ export async function GET() {
     `driver: ${store.driver}`,
   )
   await store.deleteEvent(built.plan.event.id)
+
+  /* M4 — readiness. The score must be attributable and must move correctly. */
+
+  const readiness = scoreReadiness(built.plan)
+  const bandTotal = readiness.bands.reduce((sum, b) => sum + b.earned, 0)
+  record(
+    'RD1',
+    'Score equals the sum of its bands',
+    bandTotal === readiness.score && readiness.score >= 0 && readiness.score <= 100,
+    `score ${readiness.score}, bands sum ${bandTotal}`,
+  )
+
+  record(
+    'RD2',
+    'Every deduction names a fix',
+    readiness.deductions.every((d) => d.fixNext.length > 0 && d.points > 0),
+    `${readiness.deductions.length} deductions, all with a next action`,
+  )
+
+  /* AT4 — an unresolved weather risk costs points on an outdoor event, and
+     mitigating it recovers them. */
+  const outdoorBefore = scoreReadiness(built.plan)
+  const mitigated = {
+    ...built.plan,
+    risks: built.plan.risks.map((r) =>
+      r.kind === 'weather' ? { ...r, status: 'mitigated' as const } : r,
+    ),
+  }
+  const outdoorAfter = scoreReadiness(mitigated)
+  record(
+    'AT4',
+    'Mitigating the weather risk raises readiness',
+    outdoorAfter.score > outdoorBefore.score,
+    `${outdoorBefore.score} to ${outdoorAfter.score} once weather is mitigated`,
+  )
+
+  record(
+    'AT4b',
+    'An outdoor event with no backup is penalised',
+    outdoorBefore.deductions.some((d) => /backup/i.test(d.reason)),
+    'backup deduction present for an outdoor event',
+  )
 
   /* The configured model provider, if any, must actually answer. A key that
      is set but rejected is a failure; no key at all is a valid configuration. */
