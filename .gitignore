@@ -40,3 +40,6 @@ Thumbs.db
 
 # typescript build cache
 *.tsbuildinfo
+
+# local server output
+server.log

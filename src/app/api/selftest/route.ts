@@ -6,6 +6,9 @@ import { getLlm } from '@/lib/llm'
 import { PlanExplanation, parseWithRetry } from '@/lib/llm/provider'
 import { EventDraft } from '@/lib/schemas'
 import { getStore } from '@/lib/store'
+import { holidaysNear } from '@/lib/sources/nager'
+import { forecastForDate, geocodeCity, withinForecastWindow } from '@/lib/sources/open-meteo'
+import { extractPriceINR, isPermittedSource } from '@/lib/sources/search'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,6 +110,62 @@ export async function GET() {
     `driver: ${store.driver}`,
   )
   await store.deleteEvent(built.plan.event.id)
+
+  /* M3 — live sources. Each is checked for behaviour, not just reachability. */
+
+  const geo = await geocodeCity('Hyderabad')
+  record(
+    'SRC1',
+    'Open-Meteo geocodes the demo city',
+    geo.ok && geo.data !== null,
+    geo.ok && geo.data ? `${geo.data.lat}, ${geo.data.lon}` : 'failed',
+  )
+
+  if (geo.ok && geo.data) {
+    // A date inside the window must produce a forecast...
+    const soon = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10)
+    const near = await forecastForDate(geo.data, soon)
+    record(
+      'SRC2',
+      'A date inside the window returns a forecast',
+      near.ok && near.data !== null,
+      near.ok && near.data ? `${soon}: ${near.data.rainChancePct}% rain` : 'no forecast',
+    )
+
+    // ...and one beyond it must be refused rather than guessed.
+    const far = new Date(Date.now() + 120 * 86_400_000).toISOString().slice(0, 10)
+    record(
+      'SRC3',
+      'A date beyond the window is reported unknown, not guessed',
+      withinForecastWindow(far) === false,
+      `${far} correctly outside the 15-day horizon`,
+    )
+  }
+
+  const holidays = await holidaysNear(new Date().toISOString().slice(0, 10))
+  record(
+    'SRC4',
+    'Holiday lookup declares its source and caveat',
+    holidays.ok && holidays.data.source === 'bundled-india' && Boolean(holidays.data.caveat),
+    holidays.ok ? `source=${holidays.data.source}` : 'failed',
+  )
+
+  record(
+    'SRC5',
+    'Blocked sources are refused',
+    !isPermittedSource('https://maps.google.com/place/x') &&
+      !isPermittedSource('https://www.justdial.com/x') &&
+      isPermittedSource('https://example.in/pricing'),
+    'map, social and directory hosts rejected',
+  )
+
+  record(
+    'SRC6',
+    'A price read from a snippet is an estimate, not a quote',
+    extractPriceINR('Buffet from Rs 450 per head') === 450 &&
+      extractPriceINR('call for details') === null,
+    'regex extraction is bounded and nullable',
+  )
 
   const passed = results.filter((r) => r.pass).length
   return NextResponse.json(

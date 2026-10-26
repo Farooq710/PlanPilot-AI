@@ -2,8 +2,9 @@
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { setActiveEventId } from '@/lib/active-event'
+import { getActiveEventId, setActiveEventId } from '@/lib/active-event'
 import { buildPlanFromDraft } from '@/lib/engines/plan'
+import { runResearch } from '@/lib/engines/research'
 import { EventDraft } from '@/lib/schemas'
 import { getStore } from '@/lib/store'
 
@@ -68,4 +69,37 @@ export async function createPlan(
 
   revalidatePath('/', 'layout')
   redirect('/command')
+}
+
+/**
+ * Runs the fast research sources — weather, holidays, and web search when a
+ * key is configured — and saves what they returned. Venue candidates come
+ * separately, because Overpass regularly takes the better part of a minute.
+ */
+export async function researchAction(): Promise<void> {
+  const store = await getStore()
+  const eventId = await getActiveEventId()
+  const plan = await store.getPlan(eventId)
+  if (!plan) return
+
+  const report = await runResearch(plan)
+  await store.putPlan(report.plan)
+
+  revalidatePath('/research')
+  revalidatePath('/command')
+}
+
+/** Toggles a vendor on or off the shortlist. */
+export async function toggleShortlist(vendorId: string): Promise<void> {
+  const store = await getStore()
+  const eventId = await getActiveEventId()
+  const plan = await store.getPlan(eventId)
+  if (!plan) return
+
+  await store.putVendors(
+    eventId,
+    plan.vendors.map((v) => (v.id === vendorId ? { ...v, shortlisted: !v.shortlisted } : v)),
+  )
+  revalidatePath('/research')
+  revalidatePath('/command')
 }

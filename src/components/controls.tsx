@@ -11,6 +11,11 @@ import { Icon } from './ui'
 
 type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'ghost' | 'outline' | 'text'
+  /**
+   * Only usable from another client component — a component reference is a
+   * function and cannot cross the server/client boundary. From a server
+   * component, render `<Icon />` as the first child instead.
+   */
   icon?: LucideIcon
   full?: boolean
 }
