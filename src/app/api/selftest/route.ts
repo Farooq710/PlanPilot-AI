@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { buildPlanFromDraft } from '@/lib/engines/plan'
 import { budgetTotals } from '@/lib/engines/budget'
 import { scoreReadiness } from '@/lib/engines/readiness'
+import { applyScenario } from '@/lib/engines/scenario'
 import { validatePlan } from '@/lib/engines/validate'
 import { getLlm } from '@/lib/llm'
 import { PlanExplanation, parseWithRetry } from '@/lib/llm/provider'
@@ -152,6 +153,76 @@ export async function GET() {
     'An outdoor event with no backup is penalised',
     outdoorBefore.deductions.some((d) => /backup/i.test(d.reason)),
     'backup deduction present for an outdoor event',
+  )
+
+  /* AT3 — changing guests moves what depends on headcount and nothing else. */
+
+  const scenario = applyScenario(built.plan, { guestCount: 55 })
+  const movedCategories = new Set(
+    scenario.result.changes
+      .filter((c) => c.field === 'planned')
+      .map((c) => c.label.toLowerCase()),
+  )
+
+  record(
+    'AT3a',
+    'Guest change moves the headcount-driven lines',
+    movedCategories.has('food') && movedCategories.has('cake'),
+    `moved: ${[...movedCategories].join(', ') || 'nothing'}`,
+  )
+
+  // The real test is what did NOT move.
+  const unrelated = ['venue', 'decor', 'activities', 'contingency'] as const
+  const drifted = unrelated.filter((category) => {
+    const was = built.plan.budget.find((b) => b.category === category)?.plannedINR
+    const now = scenario.nextPlan.budget.find((b) => b.category === category)?.plannedINR
+    return was !== now
+  })
+  record(
+    'AT3b',
+    'Unrelated budget lines are untouched',
+    drifted.length === 0,
+    drifted.length ? `drifted: ${drifted.join(', ')}` : 'venue, decor, activities, contingency all held',
+  )
+
+  record(
+    'AT3c',
+    'Style and constraints survive a guest change',
+    scenario.nextPlan.event.style.join() === built.plan.event.style.join() &&
+      scenario.nextPlan.event.constraints === built.plan.event.constraints,
+    'chosen style and notes carried through unchanged',
+  )
+
+  record(
+    'AT3d',
+    'The cascade names the dependent items',
+    scenario.result.cascade.some(
+      (c) => c.to.includes('Catering') && c.to.includes('Venue capacity'),
+    ),
+    scenario.result.cascade.map((c) => `${c.from} -> ${c.to.length} items`).join('; '),
+  )
+
+  record(
+    'AT3e',
+    'Catering cost rises with the guest count',
+    scenario.result.totalAfterINR > scenario.result.totalBeforeINR,
+    `total ₹${scenario.result.totalBeforeINR.toLocaleString('en-IN')} to ₹${scenario.result.totalAfterINR.toLocaleString('en-IN')}`,
+  )
+
+  record(
+    'AT3f',
+    'Going over budget costs readiness headroom',
+    scenario.result.readinessAfter < scenario.result.readinessBefore,
+    `readiness ${scenario.result.readinessBefore} to ${scenario.result.readinessAfter} when the plan goes over budget`,
+  )
+
+  /* Moving indoors must resolve the weather risk and drop the backup task. */
+  const indoors = applyScenario(built.plan, { indoorOutdoor: 'indoor' })
+  record(
+    'AT4c',
+    'Moving indoors resolves the weather risk',
+    indoors.nextPlan.risks.some((r) => r.kind === 'weather' && r.status === 'mitigated'),
+    `readiness ${indoors.result.readinessBefore} to ${indoors.result.readinessAfter}`,
   )
 
   /* The configured model provider, if any, must actually answer. A key that

@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { getActiveEventId, setActiveEventId } from '@/lib/active-event'
 import { buildPlanFromDraft } from '@/lib/engines/plan'
 import { runResearch } from '@/lib/engines/research'
-import { EventDraft, type TaskStatus } from '@/lib/schemas'
+import { applyScenario } from '@/lib/engines/scenario'
+import { EventDraft, ScenarioDelta, type TaskStatus } from '@/lib/schemas'
 import { getStore } from '@/lib/store'
 
 export type CreatePlanState =
@@ -158,4 +159,26 @@ export async function toggleRiskMitigated(riskId: string): Promise<void> {
     ),
   )
   revalidatePath('/command')
+}
+
+/**
+ * Applies a scenario the user accepted. The scenario is recomputed here rather
+ * than trusting anything posted from the browser, then stored alongside the
+ * new plan so the change has a record.
+ */
+export async function acceptScenario(delta: ScenarioDelta): Promise<void> {
+  const store = await getStore()
+  const eventId = await getActiveEventId()
+  const plan = await store.getPlan(eventId)
+  if (!plan) return
+
+  const parsed = ScenarioDelta.safeParse(delta)
+  if (!parsed.success) return
+
+  const { result, nextPlan } = applyScenario(plan, parsed.data)
+  await store.putPlan(nextPlan)
+  await store.putScenario(result)
+
+  revalidatePath('/', 'layout')
+  redirect('/command')
 }

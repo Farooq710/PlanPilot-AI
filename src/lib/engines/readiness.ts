@@ -86,8 +86,15 @@ export function scoreReadiness(plan: Plan): ReadinessReport {
   /* ------------------------------------------------------------ budget */
 
   const totals = budgetTotals(budget, event.budgetINR)
-  const headroomShare =
-    event.budgetINR > 0 ? Math.max(0, totals.remaining) / event.budgetINR : 0
+  // Headroom is what is left once the committed lines are covered. The
+  // contingency line is itself the buffer, so it is excluded from what is
+  // committed rather than counted against the headroom it provides.
+  const contingency = budget
+    .filter((b) => b.category === 'contingency')
+    .reduce((sum, b) => sum + b.plannedINR, 0)
+  const committed = Math.max(totals.planned - contingency, totals.actual)
+  const headroom = event.budgetINR - committed
+  const headroomShare = event.budgetINR > 0 ? Math.max(0, headroom) / event.budgetINR : 0
   // Full marks at 10% headroom or better; nothing once the budget is gone.
   const budgetPoints = Math.round(WEIGHTS.budget * Math.min(1, headroomShare / 0.1))
   bands.push({ key: 'budget', label: 'Budget headroom', weight: WEIGHTS.budget, earned: budgetPoints })
@@ -96,9 +103,9 @@ export function scoreReadiness(plan: Plan): ReadinessReport {
     deductions.push({
       points: WEIGHTS.budget - budgetPoints,
       reason:
-        totals.remaining < 0
-          ? `${inr(Math.abs(totals.remaining))} over budget`
-          : `Only ${inr(totals.remaining)} left of ${inr(event.budgetINR)}`,
+        headroom < 0
+          ? `${inr(Math.abs(headroom))} over budget`
+          : `Only ${inr(headroom)} unallocated of ${inr(event.budgetINR)}`,
       fixNext: 'Review the trade-offs and cut a line',
     })
   }
