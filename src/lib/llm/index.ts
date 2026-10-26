@@ -1,5 +1,6 @@
 import { FallbackProvider } from './fallback'
 import { GeminiProvider } from './gemini'
+import { OpenAiProvider } from './openai'
 import {
   type ConstraintReading,
   type ExplainInput,
@@ -12,10 +13,22 @@ export { PlanExplanation as PlanExplanationSchema } from './provider'
 
 const fallback = new FallbackProvider()
 
-/** Gemini when a key is configured, the deterministic writer otherwise. */
+/**
+ * Provider preference: OpenAI, then Gemini, then the deterministic writer.
+ * Set LLM_PROVIDER to pin one explicitly.
+ */
 export function getLlm(): LlmProvider {
-  const key = process.env.GEMINI_API_KEY
-  return key ? new GeminiProvider(key) : fallback
+  const pinned = process.env.LLM_PROVIDER?.toLowerCase()
+  const openAiKey = process.env.OPENAI_API_KEY
+  const geminiKey = process.env.GEMINI_API_KEY
+
+  if (pinned === 'fallback') return fallback
+  if (pinned === 'openai') return openAiKey ? new OpenAiProvider(openAiKey) : fallback
+  if (pinned === 'gemini') return geminiKey ? new GeminiProvider(geminiKey) : fallback
+
+  if (openAiKey) return new OpenAiProvider(openAiKey)
+  if (geminiKey) return new GeminiProvider(geminiKey)
+  return fallback
 }
 
 export type ExplainOutcome = {

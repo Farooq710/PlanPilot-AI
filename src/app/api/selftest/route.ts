@@ -111,6 +111,32 @@ export async function GET() {
   )
   await store.deleteEvent(built.plan.event.id)
 
+  /* The configured model provider, if any, must actually answer. A key that
+     is set but rejected is a failure; no key at all is a valid configuration. */
+  const llm = getLlm()
+  if (llm.available) {
+    try {
+      const probe = await llm.explainPlan({
+        eventType: 'birthday',
+        city: 'Hyderabad',
+        guestCount: 10,
+        budgetLabel: '₹10,000',
+        styleLabel: 'minimal',
+        indoorOutdoor: 'indoor',
+        constraints: '',
+        lines: [{ category: 'food', label: 'Catering', plannedLabel: '₹10,000', perHeadLabel: '₹1,000' }],
+      })
+      record('LLM1', 'Configured model answers in the expected shape', true,
+        `${llm.name} returned ${probe.summary.length} chars`)
+    } catch (error) {
+      record('LLM1', 'Configured model answers in the expected shape', false,
+        `${llm.name} failed: ${(error instanceof Error ? error.message : String(error)).slice(0, 160)}`)
+    }
+  } else {
+    record('LLM1', 'No model configured, fallback in use', true,
+      'set OPENAI_API_KEY or GEMINI_API_KEY to enable model prose')
+  }
+
   /* M3 — live sources. Each is checked for behaviour, not just reachability. */
 
   const geo = await geocodeCity('Hyderabad')
