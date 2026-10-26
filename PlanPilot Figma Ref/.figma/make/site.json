@@ -1,0 +1,10 @@
+{
+  "description": "Plan and manage events in India with evidence-backed vendor research, budget tracking, task coordination, what-if comparisons, and ready-to-share execution plans.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
