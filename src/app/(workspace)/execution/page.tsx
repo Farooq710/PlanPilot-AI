@@ -8,11 +8,10 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card, EmptyState, EvidenceChip, Icon } from '@/components/ui'
-import { getActiveEventId } from '@/lib/active-event'
+import { getActivePlan } from '@/lib/active-event'
 import { CATEGORY_LABEL, budgetTotals } from '@/lib/engines/budget'
 import { scoreReadiness } from '@/lib/engines/readiness'
 import { inr } from '@/lib/money'
-import { getStore } from '@/lib/store'
 import { clockTime, shortDate } from '@/lib/time'
 
 export const dynamic = 'force-dynamic'
@@ -49,8 +48,7 @@ const DOWNLOADS = [
 ] as const
 
 export default async function ExecutionPage() {
-  const store = await getStore()
-  const plan = await store.getPlan(await getActiveEventId())
+  const plan = await getActivePlan()
 
   if (!plan) {
     return (

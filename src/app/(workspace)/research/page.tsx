@@ -12,20 +12,18 @@ import { researchAction, toggleShortlist } from '@/app/actions'
 import { Button } from '@/components/controls'
 import { MapPanel, VenueLoader } from '@/components/research-client'
 import { Card, EmptyState, EvidenceChip, Icon, Tag } from '@/components/ui'
-import { getActiveEventId } from '@/lib/active-event'
+import { getActivePlan } from '@/lib/active-event'
 import { inr } from '@/lib/money'
 import { holidaysNear } from '@/lib/sources/nager'
 import { forecastForDate, withinForecastWindow } from '@/lib/sources/open-meteo'
 import { getSearchProvider } from '@/lib/sources/search'
-import { getStore } from '@/lib/store'
 import { dayAndDate } from '@/lib/time'
 import type { Vendor } from '@/lib/schemas'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ResearchPage() {
-  const store = await getStore()
-  const plan = await store.getPlan(await getActiveEventId())
+  const plan = await getActivePlan()
 
   if (!plan) {
     return (

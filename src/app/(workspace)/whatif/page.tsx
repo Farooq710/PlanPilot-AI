@@ -2,12 +2,11 @@ import { ArrowRight, CornerDownRight, FlaskConical, TriangleAlert } from 'lucide
 import { acceptScenario } from '@/app/actions'
 import { Button } from '@/components/controls'
 import { Card, EmptyState, Icon } from '@/components/ui'
-import { getActiveEventId } from '@/lib/active-event'
+import { getActivePlan } from '@/lib/active-event'
 import { applyScenario } from '@/lib/engines/scenario'
 import { readinessTone } from '@/lib/engines/readiness'
 import { delta as fmtDelta, inr } from '@/lib/money'
 import { ScenarioDelta, type ScenarioChange } from '@/lib/schemas'
-import { getStore } from '@/lib/store'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,8 +22,7 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 
 export default async function WhatIfPage({ searchParams }: { searchParams: Search }) {
   const params = await searchParams
-  const store = await getStore()
-  const plan = await store.getPlan(await getActiveEventId())
+  const plan = await getActivePlan()
 
   if (!plan) {
     return (

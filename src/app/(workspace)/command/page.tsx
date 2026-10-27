@@ -14,20 +14,18 @@ import { toggleConfirmed, toggleRiskMitigated } from '@/app/actions'
 import { TaskBoard } from '@/components/board'
 import { BudgetDonut, BudgetTable, PlannedVsActual, ReadinessGauge } from '@/components/charts'
 import { Card, EmptyState, EvidenceChip, Icon, Tag } from '@/components/ui'
-import { getActiveEventId } from '@/lib/active-event'
+import { getActivePlan } from '@/lib/active-event'
 import { budgetTotals, proposeTradeOffs } from '@/lib/engines/budget'
 import { scoreReadiness, readinessTone } from '@/lib/engines/readiness'
 import { validatePlan, type IssueSeverity } from '@/lib/engines/validate'
 import { inr } from '@/lib/money'
 import type { Plan, Risk, RiskStatus } from '@/lib/schemas'
-import { getStore } from '@/lib/store'
 import { clockTime, daysUntil, stamp } from '@/lib/time'
 
 export const dynamic = 'force-dynamic'
 
 export default async function CommandPage() {
-  const store = await getStore()
-  const plan = await store.getPlan(await getActiveEventId())
+  const plan = await getActivePlan()
 
   if (!plan) {
     return (

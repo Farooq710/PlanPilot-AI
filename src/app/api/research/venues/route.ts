@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getActiveEventId } from '@/lib/active-event'
+import { getActivePlan } from '@/lib/active-event'
 import { researchVenues } from '@/lib/engines/research'
 import { getStore } from '@/lib/store'
 
@@ -13,9 +13,7 @@ export const maxDuration = 60
  * panel rather than the page.
  */
 export async function POST() {
-  const store = await getStore()
-  const eventId = await getActiveEventId()
-  const plan = await store.getPlan(eventId)
+  const plan = await getActivePlan()
 
   if (!plan) {
     return NextResponse.json({ ok: false, error: 'No active plan' }, { status: 404 })
@@ -24,6 +22,7 @@ export async function POST() {
   const result = await researchVenues(plan)
   // Save either way: a successful geocode is worth keeping even if Overpass
   // timed out, so a retry does not have to resolve the city again.
+  const store = await getStore()
   await store.putPlan(result.plan)
 
   return NextResponse.json({

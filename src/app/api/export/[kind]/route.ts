@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getActiveEventId } from '@/lib/active-event'
+import { getActivePlan } from '@/lib/active-event'
 import { EXPORTS, type ExportKind } from '@/lib/exports'
-import { getStore } from '@/lib/store'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,8 +18,7 @@ export async function GET(
     return NextResponse.json({ error: 'Unknown export' }, { status: 404 })
   }
 
-  const store = await getStore()
-  const plan = await store.getPlan(await getActiveEventId())
+  const plan = await getActivePlan()
   if (!plan) {
     return NextResponse.json({ error: 'No active plan' }, { status: 404 })
   }
