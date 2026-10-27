@@ -1,0 +1,5 @@
+# The Figma Make export is a design reference, not part of the app.
+PlanPilot Figma Ref
+
+# Local SQLite data; serverless uses the in-memory driver.
+.data
