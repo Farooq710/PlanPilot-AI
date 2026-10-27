@@ -229,6 +229,9 @@ export function BudgetTable({ items }: { items: BudgetItem[] }) {
         View as table
       </summary>
       <table className="mt-2 w-full text-[14px]">
+        <caption className="sr-only">
+          Planned against actual spend by category, the same figures as the donut chart
+        </caption>
         <thead className="bg-sunk text-left text-ink-muted">
           <tr>
             <th scope="col" className="px-3 py-2 font-medium">Category</th>
