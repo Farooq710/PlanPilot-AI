@@ -45,3 +45,6 @@ Thumbs.db
 server.log
 
 .vercel
+
+# test coverage output
+coverage/
