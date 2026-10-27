@@ -3,7 +3,6 @@ import {
   type Plan,
   type ResearchProposal,
   type RiskProposal,
-  type Vendor,
   type VendorCategory,
 } from '@/lib/schemas'
 import { inr } from '@/lib/money'

@@ -53,8 +53,13 @@ venues and holidays are all keyless.
 | --- | --- |
 | `npm run dev` | Development server |
 | `npm run build` / `npm start` | Production build and server |
-| `npm test` | Unit suite, 86 tests |
+| `npm test` | Unit suite, 121 tests |
+| `npm run test:coverage` | Same, with a coverage report |
+| `npm run lint` | ESLint, flat config |
 | `npm run typecheck` | `tsc --noEmit` |
+
+CI runs all of the above on every push and pull request, and fails the build on
+any high or critical advisory in a shipped dependency.
 
 Acceptance tests that need a running server live at
 `GET /api/selftest` — it returns pass/fail per test and a non-200 status if
@@ -147,9 +152,14 @@ with hand-verified vendors before putting real numbers in front of anyone.
 ## Testing
 
 ```bash
-npm test          # 86 unit tests
+npm test                           # 121 unit tests
+npm run test:coverage              # with coverage
 curl localhost:3000/api/selftest   # acceptance tests against a running server
 ```
+
+Coverage sits at 88% of statements. It is highest where failure actually lives
+— the reducer at 96%, the store at 100%, the HTTP layer at 93% — rather than
+spread evenly for the sake of a number.
 
 | Acceptance test | Where it is proven |
 | --- | --- |
@@ -181,6 +191,8 @@ real schemas rather than casts, so a schema change breaks them loudly.
   `connect-src` lists only the hosts the research layer actually calls.
 - No accounts, no personal data stored. The shared plan page is read-only and
   cannot write.
+- `npm audit` reports zero vulnerabilities, including dev dependencies, and CI
+  fails on any new high or critical advisory.
 
 **Known limitation:** the CSP keeps `script-src 'unsafe-inline'` because Next's
 hydration bootstrap is inline. A nonce-based policy is the correct fix and the

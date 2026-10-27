@@ -5,13 +5,12 @@ import {
   Risk,
   ScenarioResult,
   Task,
-  type BudgetItem,
   type ScenarioChange,
   type ScenarioDelta,
 } from '@/lib/schemas'
 import { inr } from '@/lib/money'
 import { CATEGORY_LABEL, SCALES_WITH_GUESTS, buildBudget, budgetTotals } from './budget'
-import { buildSchedule, buildTasks } from './schedule'
+import { buildSchedule } from './schedule'
 import { scoreReadiness } from './readiness'
 
 /**

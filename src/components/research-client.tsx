@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { RefreshCw, Search, TriangleAlert } from 'lucide-react'
@@ -49,7 +49,7 @@ export function VenueLoader({ autoStart }: { autoStart: boolean }) {
   const router = useRouter()
   const started = useRef(false)
 
-  async function load() {
+  const load = useCallback(async () => {
     setState({ phase: 'loading' })
     try {
       const response = await fetch('/api/research/venues', { method: 'POST' })
@@ -67,16 +67,16 @@ export function VenueLoader({ autoStart }: { autoStart: boolean }) {
         error: error instanceof Error ? error.message : 'Request failed',
       })
     }
-  }
+  }, [router])
 
   useEffect(() => {
+    // The ref holds this to one automatic run per mount, now that `load` is a
+    // declared dependency rather than a suppressed warning.
     if (autoStart && !started.current) {
       started.current = true
       void load()
     }
-    // Only ever auto-starts once per mount.
-
-  }, [autoStart])
+  }, [autoStart, load])
 
   if (state.phase === 'done') {
     return (
