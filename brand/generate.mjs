@@ -113,7 +113,7 @@ const mark = (text, size, x, y, anchor = 'start', tracking = size * 0.16, fill =
  * Draws the instrument at a given centre and scale. Shared by the plate and
  * the standalone mark so the two can never drift apart.
  */
-function dial({ cx, cy, rRing, gauge, band, ticks = true, graduations = true, horizon = 0.26 }) {
+function dial({ cx, cy, rRing, gauge, band, ticks = true, graduations = true, horizon = 0.26, horizonLine = true }) {
   const g = []
 
   if (ticks) {
@@ -133,10 +133,13 @@ function dial({ cx, cy, rRing, gauge, band, ticks = true, graduations = true, ho
     g.push(`<path d="${circlePath(rRing, cx, cy)}" stroke="${HAIR}" stroke-width="${n(rRing * 0.0053)}" fill="none"/>`)
   }
 
-  // Horizon.
-  g.push(
-    `<path d="M ${n(cx - rRing - rRing * horizon)} ${n(cy)} L ${n(cx + rRing + rRing * horizon)} ${n(cy)}" stroke="${HAIR}" stroke-width="${n(rRing * 0.0053)}"/>`,
-  )
+  // Horizon. Dropped entirely in the icon, where a hairline this long is
+  // either invisible or dirt depending on the size.
+  if (horizonLine) {
+    g.push(
+      `<path d="M ${n(cx - rRing - rRing * horizon)} ${n(cy)} L ${n(cx + rRing + rRing * horizon)} ${n(cy)}" stroke="${HAIR}" stroke-width="${n(rRing * 0.0053)}"/>`,
+    )
+  }
 
   // Unlit track, then the six segments with angular gaps so they stay
   // optically even at every radius.
@@ -307,14 +310,42 @@ logo.push(dial({ cx: mcx, cy: mcy, rRing: 292, gauge: 219, band: 34, horizon: 0.
 const logoDoc = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">${logo.join('\n')}</svg>`
 assertClean(logoDoc, 'mark')
 
+/* ═══════════════════════════════════════════════════════════ ICON ═════════ */
+const I = 512
+const icon = []
+icon.push(
+  dial({
+    cx: I / 2,
+    // Optically centred on the mass of the band, not on the geometric centre
+    // of the circle the band belongs to.
+    cy: 342,
+    rRing: 210,
+    gauge: 162,
+    band: 52,
+    ticks: false,
+    graduations: false,
+    horizonLine: false,
+  }),
+)
+const iconDoc = `<svg xmlns="http://www.w3.org/2000/svg" width="${I}" height="${I}" viewBox="0 0 ${I} ${I}">${icon.join('\n')}</svg>`
+assertClean(iconDoc, 'icon')
+
 /* ── write ───────────────────────────────────────────────────────────────── */
 const OUT = 'C:/Users/FAROOQ/Downloads/VPW C05/brand'
 mkdirSync(OUT, { recursive: true })
 
 writeFileSync(`${OUT}/planpilot-plate.svg`, plateDoc)
 writeFileSync(`${OUT}/planpilot-mark.svg`, logoDoc)
+writeFileSync(`${OUT}/planpilot-icon.svg`, iconDoc)
 
 await sharp(Buffer.from(plateDoc), { density: 300 }).resize(3600).png().toFile(`${OUT}/planpilot-plate.png`)
 await sharp(Buffer.from(logoDoc), { density: 300 }).resize(2000).png().toFile(`${OUT}/planpilot-mark.png`)
+await sharp(Buffer.from(iconDoc), { density: 300 }).resize(512).png().toFile(`${OUT}/planpilot-icon.png`)
+// Apple expects an opaque square at 180px.
+await sharp(Buffer.from(iconDoc), { density: 300 })
+  .resize(180)
+  .flatten({ background: GROUND })
+  .png()
+  .toFile(`${OUT}/planpilot-icon-180.png`)
 
-console.log('plate + mark written, documents verified clean')
+console.log('plate + mark + icon written, documents verified clean')

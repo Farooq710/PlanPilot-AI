@@ -12,6 +12,10 @@ figure, limit, capacity check and score is computed in code.
 
 Built for PromptWars Challenge 5 (Celebration & Event Planner).
 
+![A walkthrough of PlanPilot AI: the brief, the readiness score with its
+deductions, sourced research, and a what-if that moves only the dependent
+lines](brand/planpilot-demo.gif)
+
 ---
 
 ## What makes it different

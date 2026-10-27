@@ -48,3 +48,6 @@ server.log
 
 # test coverage output
 coverage/
+
+# brand tooling
+brand/node_modules/

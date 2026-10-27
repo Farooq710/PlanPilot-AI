@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Icon } from './ui'
 import { IconButton } from './controls'
+import { LogoMark } from './logo'
 
 /**
  * Ported from the reference's chrome.tsx. The reference shipped separate
@@ -69,9 +70,7 @@ function Rail({ current }: { current: number }) {
       className="hidden h-full w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex"
     >
       <div className="flex h-16 items-center gap-2 border-b border-line px-6">
-        <span className="grid size-8 place-items-center rounded-lg bg-ink text-[14px] font-semibold text-white">
-          PP
-        </span>
+        <LogoMark className="h-7 w-auto shrink-0" />
         <span className="text-[16px] font-semibold tracking-tight">PlanPilot AI</span>
       </div>
       <ol className="flex flex-col gap-1 p-3">

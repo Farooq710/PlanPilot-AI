@@ -5,7 +5,9 @@
 | `PHILOSOPHY.md` | The design philosophy the work was made against |
 | `planpilot-mark.svg` / `.png` | The logo. Use the SVG wherever possible — it scales without loss |
 | `planpilot-plate.svg` / `.png` | The presentation plate |
-| `generate.mjs` | Generates all four files |
+| `planpilot-icon.svg` / `.png` | The reducible mark, for favicons and the app rail |
+| `planpilot-demo.webp` / `.gif` | A 55-second walkthrough of the running app |
+| `generate.mjs` | Generates every still above |
 
 ## The encoding
 
@@ -33,12 +35,25 @@ Taken from the app's tokens, so the identity and the interface agree.
 ## Regenerating
 
 ```bash
-node brand/generate.mjs
+cd brand && npm install && npm run build
 ```
 
-Needs `opentype.js` and `sharp`, and the two typefaces named at the top of the
-script — Italiana and Geist Mono, both OFL. `FONT_DIR` points at a local path
-and will need changing on another machine.
+The generator keeps its own `package.json` so image tooling stays out of the
+application's dependency tree. It needs the two typefaces named at the top of
+the script — Italiana and Geist Mono, both OFL. `FONT_DIR` points at a local
+path and will need changing on another machine.
+
+The app does not import anything from here at build time: `src/app/icon.svg`,
+`src/app/apple-icon.png` and `src/components/logo.tsx` are copies, generated
+from `planpilot-icon.svg`. Regenerate them after changing the geometry, or the
+favicon and the rail will drift from the brand.
+
+## The walkthrough
+
+`planpilot-demo.webp` and `.gif` are the same 55-second capture of the running
+application, driven through the demo script with a headless browser. Nothing in
+them is mocked. There is no ffmpeg on the machine they were made on, so there
+is no MP4; both formats embed in a README or a chat without a player.
 
 Type is converted to outlines, so the exported files carry no font dependency.
 The script refuses to write a document containing a non-finite coordinate:

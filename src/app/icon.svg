@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><path d="M 94 342 A 162 162 0 0 1 418 342" stroke="#EAE3D8" stroke-width="52" fill="none" stroke-linecap="butt"/>
+<path d="M 94.008 340.374 A 162 162 0 0 1 140.305 228.604" stroke="#141C2E" stroke-width="52" fill="none" stroke-linecap="butt"/>
+<path d="M 142.604 226.305 A 162 162 0 0 1 304.512 187.434" stroke="#141C2E" stroke-width="52" fill="none" stroke-linecap="butt"/>
+<path d="M 307.604 188.439 A 162 162 0 0 1 369.396 226.305" stroke="#141C2E" stroke-width="52" fill="none" stroke-linecap="butt"/>
+<path d="M 371.695 228.604 A 162 162 0 0 1 394.606 258.14" stroke="#141C2E" stroke-width="52" fill="none" stroke-linecap="butt"/>
+<path d="M 396.261 260.939 A 162 162 0 0 1 409.561 290.396" stroke="#141C2E" stroke-width="52" fill="none" stroke-linecap="butt"/>
+<path d="M 410.566 293.488 A 162 162 0 0 1 417.992 340.374" stroke="#141C2E" stroke-width="52" fill="none" stroke-linecap="butt"/>
+<path d="M 144.96 342 A 111.04 111.04 0 0 1 367.04 342" stroke="#D9D0C2" stroke-width="1.008" fill="none"/>
+<path d="M 274.071 320.156 L 322.802 261.25" stroke="#B8372B" stroke-width="2.415"/>
+<circle cx="256" cy="342" r="6.3" fill="#B8372B"/>
+<circle cx="256" cy="342" r="19.32" fill="none" stroke="#B8372B" stroke-width="1.113"/></svg>
