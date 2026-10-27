@@ -163,7 +163,9 @@ export default async function WhatIfPage({ searchParams }: { searchParams: Searc
         <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
           {/* -------------------------------------------------- diff */}
           <Card className="overflow-hidden lg:col-span-2">
-            <div className="grid grid-cols-2 border-b border-line bg-sunk text-[12px] font-semibold uppercase tracking-wide text-ink-muted">
+            {/* Below sm each row stacks and labels its own halves, so the
+                column headings would be misleading there. */}
+            <div className="hidden grid-cols-2 border-b border-line bg-sunk text-[12px] font-semibold uppercase tracking-wide text-ink-muted sm:grid">
               <span className="px-4 py-2">Current plan</span>
               <span className="border-l border-line px-4 py-2">Proposed plan</span>
             </div>
@@ -181,13 +183,13 @@ export default async function WhatIfPage({ searchParams }: { searchParams: Searc
                   .map((item) => (
                     <li
                       key={item.id}
-                      className="grid grid-cols-2 border-b border-line text-[14px] text-ink-muted last:border-0"
+                      className="grid border-b border-line text-[14px] text-ink-muted last:border-0 sm:grid-cols-2"
                     >
-                      <span className="px-4 py-3">
+                      <span className="px-4 pt-3 sm:py-3">
                         {item.label}
                         <span className="ml-2 tabular-nums">{inr(item.plannedINR)}</span>
                       </span>
-                      <span className="border-l border-line px-4 py-3">
+                      <span className="px-4 pb-3 sm:border-l sm:border-line sm:py-3">
                         Unchanged
                       </span>
                     </li>
@@ -259,7 +261,9 @@ export default async function WhatIfPage({ searchParams }: { searchParams: Searc
 
       {/* --------------------------------------------------- sticky footer */}
       {hasChanges && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-6 py-3 shadow-raised lg:left-60">
+        // Clears the mobile bottom tab bar, which is about 72px tall. From lg
+        // the rail is a sidebar instead, so the footer sits flush.
+        <div className="fixed inset-x-0 bottom-[72px] z-30 border-t border-line bg-surface px-6 py-3 shadow-raised lg:bottom-0 lg:left-60">
           <div className="flex flex-wrap items-center gap-4">
             <p className="text-[14px]">
               <span className="text-ink-muted">Total</span>{' '}
@@ -299,14 +303,21 @@ const TONE_TEXT = {
 function DiffRow({ change }: { change: ScenarioChange }) {
   const money = change.deltaINR !== undefined
   return (
-    <li className="grid grid-cols-2 border-b border-line bg-accent-soft text-[14px] last:border-0">
-      <span className="border-l-[3px] border-accent px-4 py-3">
+    <li className="grid border-b border-line border-l-[3px] border-l-accent bg-accent-soft text-[14px] last:border-b-0 sm:grid-cols-2">
+      <span className="px-4 pt-3 sm:py-3">
+        {/* The column headings are hidden below sm, so each half names itself. */}
+        <span className="mr-2 text-[12px] uppercase tracking-wide text-ink-muted sm:hidden">
+          Now
+        </span>
         {change.label}
         <span className="ml-2 tabular-nums text-ink-muted">
           {money ? inr(Number(change.before ?? 0)) : String(change.before ?? '—')}
         </span>
       </span>
-      <span className="flex flex-wrap items-center gap-2 border-l border-line px-4 py-3">
+      <span className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:border-l sm:border-line sm:py-3">
+        <span className="text-[12px] uppercase tracking-wide text-ink-muted sm:hidden">
+          Proposed
+        </span>
         <span className="font-semibold tabular-nums">
           {money ? inr(Number(change.after ?? 0)) : String(change.after ?? '—')}
         </span>

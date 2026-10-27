@@ -89,7 +89,10 @@ export const demoBudget: BudgetItem[] = (
       label: '2 kg celebration cake',
       plannedINR: 2000,
       actualINR: 1200,
-      perHead: null,
+      // Cake is sized by headcount, as buildBudget also treats it. Without
+      // this the seeded plan behaves differently from a built one in the
+      // what-if diff, where cake would wrongly show as unchanged.
+      perHead: 50,
       evidence: estimate('Illustrative rate of ₹600 per kilogram'),
     },
     {

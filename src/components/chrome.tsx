@@ -58,7 +58,6 @@ export type EventSummary = {
   city: string
   guests: number
   remainingLabel: string
-  draft?: boolean
 }
 
 /* ----------------------------------------------------------------- pieces */
@@ -144,7 +143,7 @@ function TopBar({ event }: { event: EventSummary }) {
   return (
     <header className="shrink-0 border-b border-line bg-surface px-4 py-3 lg:flex lg:h-16 lg:items-center lg:gap-6 lg:px-8 lg:py-0">
       <h1 className="text-[16px] font-semibold">
-        {event.draft ? 'New event (draft)' : event.title}
+        {event.title}
       </h1>
       {/* Stacked summary line on small screens, inline stats from lg up. */}
       <p className="text-[14px] text-ink-muted lg:hidden">
