@@ -7,6 +7,9 @@ re-plans consistently when one input changes.
 It is deliberately **not** a chatbot. The model writes explanations. Every
 figure, limit, capacity check and score is computed in code.
 
+**Live:** <https://planpilot-ai-two.vercel.app> ·
+**Acceptance tests:** <https://planpilot-ai-two.vercel.app/api/selftest>
+
 Built for PromptWars Challenge 5 (Celebration & Event Planner).
 
 ---
