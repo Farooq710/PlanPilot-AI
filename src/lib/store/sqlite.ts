@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS events (
   id         TEXT PRIMARY KEY,
   updated_at TEXT NOT NULL,
   json       TEXT NOT NULL,
-  narrative  TEXT
+  narrative  TEXT,
+  sample_data INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS budget_items (
@@ -123,10 +124,15 @@ export class SqliteStore implements Store {
    * that the column is already there.
    */
   private migrate(): void {
-    try {
-      this.db.exec('ALTER TABLE events ADD COLUMN narrative TEXT')
-    } catch {
-      // Column already present.
+    for (const statement of [
+      'ALTER TABLE events ADD COLUMN narrative TEXT',
+      'ALTER TABLE events ADD COLUMN sample_data INTEGER NOT NULL DEFAULT 0',
+    ]) {
+      try {
+        this.db.exec(statement)
+      } catch {
+        // Column already present.
+      }
     }
   }
 
@@ -211,7 +217,9 @@ export class SqliteStore implements Store {
     const event = await this.getEvent(eventId)
     if (!event) return null
 
-    const row = this.db.prepare('SELECT narrative FROM events WHERE id = ?').get(eventId)
+    const row = this.db
+      .prepare('SELECT narrative, sample_data FROM events WHERE id = ?')
+      .get(eventId)
     const narrative = row?.narrative
       ? PlanNarrative.parse(JSON.parse(String(row.narrative)))
       : null
@@ -224,7 +232,7 @@ export class SqliteStore implements Store {
       tasks: this.readAll(COLLECTIONS.tasks, eventId, (v) => Task.parse(v)),
       risks: this.readAll(COLLECTIONS.risks, eventId, (v) => Risk.parse(v)),
       schedule: this.readAll(COLLECTIONS.schedule, eventId, (v) => ScheduleEntry.parse(v)),
-      usingSampleData: false,
+      usingSampleData: Boolean(row?.sample_data),
     }
   }
 
@@ -237,8 +245,8 @@ export class SqliteStore implements Store {
     await this.putRisks(id, plan.risks)
     await this.putSchedule(id, plan.schedule)
     this.db
-      .prepare('UPDATE events SET narrative = ? WHERE id = ?')
-      .run(plan.narrative ? JSON.stringify(plan.narrative) : null, id)
+      .prepare('UPDATE events SET narrative = ?, sample_data = ? WHERE id = ?')
+      .run(plan.narrative ? JSON.stringify(plan.narrative) : null, plan.usingSampleData ? 1 : 0, id)
   }
 
   async putScenario(scenario: ScenarioResult): Promise<void> {

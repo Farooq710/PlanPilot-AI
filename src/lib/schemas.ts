@@ -14,10 +14,30 @@ import { z } from 'zod'
 export const EvidenceStatus = z.enum(['published', 'user_quote', 'estimate', 'unknown'])
 export type EvidenceStatus = z.infer<typeof EvidenceStatus>
 
+/**
+ * A source URL that is safe to render as an href. Zod's .url() accepts
+ * javascript: and data:, which would be an injection route straight into the
+ * evidence chip, so the protocol is checked explicitly.
+ */
+export const HttpUrl = z
+  .string()
+  .url()
+  .refine(
+    (value) => {
+      try {
+        const { protocol } = new URL(value)
+        return protocol === 'http:' || protocol === 'https:'
+      } catch {
+        return false
+      }
+    },
+    { message: 'Source URLs must be http or https' },
+  )
+
 export const Evidence = z.object({
   status: EvidenceStatus,
-  /** Absolute URL of the page the fact came from. Required unless unknown. */
-  sourceUrl: z.string().url().optional(),
+  /** Absolute http(s) URL of the page the fact came from. */
+  sourceUrl: HttpUrl.optional(),
   /** Host shown on the chip, e.g. "olivebistro.in". */
   sourceDomain: z.string().min(1).optional(),
   /** ISO timestamp of retrieval. */
@@ -129,7 +149,7 @@ export const Vendor = z.object({
   name: z.string().min(1).max(160),
   category: VendorCategory,
   /** Null when the source is OSM, which has no page per venue. */
-  sourceUrl: z.string().url().nullable().default(null),
+  sourceUrl: HttpUrl.nullable().default(null),
   fetchedAt: z.string().datetime(),
   /** OSM carries neither price nor capacity, so both stay nullable. */
   priceINR: z.number().int().min(0).nullable().default(null),

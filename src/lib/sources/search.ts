@@ -90,7 +90,13 @@ const BLOCKED_HOSTS = [
 
 export function isPermittedSource(url: string): boolean {
   try {
-    const host = new URL(url).host.toLowerCase()
+    const parsed = new URL(url)
+    // new URL() happily parses javascript: and data:, which would otherwise
+    // reach the page as an href. Only http(s) is ever a source.
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+
+    const host = parsed.host.toLowerCase()
+    if (!host) return false
     return !BLOCKED_HOSTS.some((blocked) => host.includes(blocked))
   } catch {
     return false
